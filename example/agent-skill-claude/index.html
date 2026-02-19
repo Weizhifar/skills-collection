@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Agent Skills 指南 - Interactive step-by-step guide for Antigravity"
+    />
+    <title>Agent Skills 指南 (Claude Code版)</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-content">
+          <h1 class="app-title">Agent Skills 指南 (Claude Code版)</h1>
+          <div class="step-counter" id="stepCounter" aria-live="polite">
+            <span
+              >Step <span id="currentStepNum">1</span> /
+              <span id="totalSteps">5</span></span
+            >
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <div class="content-container">
+          <!-- Left Panel: Instructions -->
+          <div class="left-panel card" id="leftPanel">
+            <div class="panel-header">
+              <h2 class="step-title" id="stepTitle">Loading...</h2>
+              <p class="step-subtitle" id="stepSubtitle"></p>
+            </div>
+            <div class="panel-body" id="leftContent">
+              <!-- Dynamic content will be inserted here -->
+            </div>
+          </div>
+
+          <!-- Right Panel: Media -->
+          <div class="right-panel card" id="rightPanel">
+            <div class="media-container" id="mediaContainer">
+              <!-- Dynamic media will be inserted here -->
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Footer Navigation -->
+      <footer class="footer">
+        <div class="footer-content">
+          <!-- Previous Button -->
+          <button
+            class="nav-button nav-button-prev"
+            id="prevButton"
+            aria-label="Previous step"
+            disabled
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12.5 15L7.5 10L12.5 5"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span>Previous</span>
+          </button>
+
+          <!-- Step Dots -->
+          <div
+            class="step-dots"
+            id="stepDots"
+            role="tablist"
+            aria-label="Step navigation"
+          >
+            <!-- Dynamic dots will be inserted here -->
+          </div>
+
+          <!-- Next Button -->
+          <button
+            class="nav-button nav-button-next"
+            id="nextButton"
+            aria-label="Next step"
+          >
+            <span>Next</span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M7.5 15L12.5 10L7.5 5"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="steps.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

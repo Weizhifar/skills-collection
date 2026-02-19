@@ -9,6 +9,9 @@ Slides Generator is a 4-step pipeline that transforms technical documents into e
 ```
 Input (PDF/MD) → Parse → Paginate → Enhance → Compile → Output (HTML/CSS/JS)
 ```
+<div align="center">
+<img src="./images/index-slide-generator.png" alt="slide-generator" width="400">
+</div>
 
 ## Installation
 

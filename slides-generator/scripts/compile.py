@@ -74,9 +74,11 @@ def load_template(template_dir: str = None) -> tuple:
     return html_template, css, js
 
 
-def convert_to_steps_json(data: dict, images_dir: str = None) -> str:
+def convert_to_steps_json(data: dict, images_dir: str = None, has_cover: bool = False) -> str:
     """Convert parsed data to steps.js format."""
     title = data.get('title', 'Untitled')
+    speaker = data.get('speaker', '')
+    team = data.get('team', '')
     steps = data.get('steps', [])
 
     # Build steps array
@@ -89,6 +91,9 @@ def convert_to_steps_json(data: dict, images_dir: str = None) -> str:
 
         # Parse content into blocks
         blocks = parse_content_to_blocks(content)
+
+        # Extract key points from bullet lists (first 3 items)
+        key_points = extract_key_points(content)
 
         # Auto-match image if images_dir provided
         right = {'type': 'placeholder', 'placeholder': 'Add an image or video for this step'}
@@ -110,6 +115,7 @@ def convert_to_steps_json(data: dict, images_dir: str = None) -> str:
             'left': {
                 'blocks': blocks
             },
+            'keyPoints': key_points,
             'right': right
         }
 
@@ -117,11 +123,15 @@ def convert_to_steps_json(data: dict, images_dir: str = None) -> str:
 
     # Create steps.js content
     js_content = f'''// Step data for "{title}"
+const hasCover = {str(has_cover).lower()};
+const coverTitle = "{title}";
+const coverSpeaker = "{speaker}";
+const coverTeam = "{team}";
 const steps = {json.dumps(steps_array, ensure_ascii=False, indent=2)};
 
 // Export for use in app.js
 if (typeof module !== 'undefined' && module.exports) {{
-  module.exports = {{ steps }};
+  module.exports = {{ steps, hasCover, coverTitle, coverSpeaker, coverTeam }};
 }}
 '''
 
@@ -144,6 +154,54 @@ def strip_markdown(text: str) -> str:
     # Remove reference-style links [text][ref]
     text = re.sub(r'\[([^\]]+)\]\[[^\]]+\]', r'\1', text)
     return text.strip()
+
+
+def extract_key_points(content: str, max_points: int = 3) -> dict:
+    """Extract key points from bullet lists in content, with label detection."""
+    import re
+
+    key_points = []
+    label = "Key Points"
+    icon = "💡"
+
+    lines = content.split('\n')
+
+    for line in lines:
+        line = line.strip()
+        # Match bullet points: - item, * item, or numbered lists
+        match = re.match(r'^[-*]\s+(.+)$|^\d+\.\s+(.+)$', line)
+        if match:
+            item = match.group(1) or match.group(2)
+            # Clean markdown formatting
+            item = strip_markdown(item)
+            if item and len(item) < 100:  # Skip too long items
+                key_points.append(item)
+        if len(key_points) >= max_points:
+            break
+
+    # Detect label based on content
+    content_lower = content.lower()
+    if any(word in content_lower for word in ['warning', '注意', '警告', 'caution', 'danger']):
+        label = "Warning"
+        icon = "⚠️"
+    elif any(word in content_lower for word in ['tip', 'tips', '技巧', '提示', '建议']):
+        label = "Tips"
+        icon = "💡"
+    elif any(word in content_lower for word in ['info', 'information', '信息', 'note']):
+        label = "Info"
+        icon = "ℹ️"
+    elif any(word in content_lower for word in ['success', '成功', 'done']):
+        label = "Success"
+        icon = "✅"
+
+    if not key_points:
+        return None
+
+    return {
+        'label': label,
+        'icon': icon,
+        'items': key_points
+    }
 
 
 def parse_content_to_blocks(content: str) -> list:
@@ -260,15 +318,22 @@ def compile(data: dict, output_dir: str, template_dir: str = None, images_dir: s
 
     # Get title
     title = data.get('title', 'Untitled Presentation')
+    speaker = data.get('speaker', '')
+    team = data.get('team', '')
     steps_count = len(data.get('steps', []))
 
     # Fill HTML template
     html_content = html_template
     html_content = html_content.replace('{{TITLE}}', title)
     html_content = html_content.replace('{{TOTAL_STEPS}}', str(steps_count))
+    html_content = html_content.replace('{{SPEAKER}}', speaker if speaker else '')
+    html_content = html_content.replace('{{TEAM}}', team if team else '')
+
+    # Check if cover should be shown
+    has_cover = bool(speaker or team)
 
     # Generate steps.js with auto-matched images
-    steps_js = convert_to_steps_json(data, images_dir)
+    steps_js = convert_to_steps_json(data, images_dir, has_cover)
 
     # Write files
     with open(output_dir / 'index.html', 'w', encoding='utf-8') as f:

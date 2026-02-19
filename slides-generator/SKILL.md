@@ -144,6 +144,36 @@ Edit [assets/templates/](assets/templates/) to customize:
 - `styles.css` - Visual styling
 - `app.js` - Navigation/interaction logic
 
+## Cover Slide
+
+Add frontmatter to your Markdown file to generate a cover slide:
+
+```yaml
+---
+speaker: 张三
+team: 人工智能研究院
+---
+```
+
+The cover slide features:
+- Dark theme with gradient background
+- Animated title, badge, and divider
+- Speaker and team information
+- "开始演示" (Start) button to enter presentation
+
+## Key Points Section
+
+The skill automatically extracts bullet points from content and displays them as "Key Points" at the bottom left of each slide.
+
+**Automatic label detection:**
+- Default: "Key Points" 💡
+- If content contains "tip/tips/技巧/提示": "Tips" 💡
+- If content contains "warning/注意/警告": "Warning" ⚠️
+- If content contains "info/信息/note": "Info" ℹ️
+- If content contains "success/成功": "Success" ✅
+
+The Key Points section is hidden when no bullet points are found.
+
 ## Features
 
 - Step navigation (Previous/Next buttons + dots)
@@ -152,3 +182,5 @@ Edit [assets/templates/](assets/templates/) to customize:
 - Responsive design (desktop/tablet/mobile)
 - Optional: KaTeX for LaTeX math rendering
 - Optional: Mermaid.js for diagrams
+- Cover slide with animations
+- Auto-extracted Key Points section

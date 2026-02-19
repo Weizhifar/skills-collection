@@ -99,24 +99,62 @@ def parse_markdown(file_path: str, level: int = 3, max_items: int = 0, max_chars
     title_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
     title = title_match.group(1) if title_match else Path(file_path).stem
 
+    # Extract speaker and team from metadata (frontmatter or special comments)
+    speaker = ''
+    team = ''
+
+    # Check for frontmatter
+    fm_match = re.search(r'^---\n(.*?)\n---', content, re.DOTALL)
+    if fm_match:
+        fm_content = fm_match.group(1)
+        speaker_match = re.search(r'speaker:\s*(.+)$', fm_content, re.MULTILINE)
+        team_match = re.search(r'team:\s*(.+)$', fm_content, re.MULTILINE)
+        if speaker_match:
+            speaker = speaker_match.group(1).strip()
+        if team_match:
+            team = team_match.group(1).strip()
+
+    # Check for comment-style metadata after title
+    if not speaker:
+        speaker_match = re.search(r'^<!--\s*speaker:\s*(.+?)\s*-->', content, re.MULTILINE)
+        if speaker_match:
+            speaker = speaker_match.group(1).strip()
+
+    if not team:
+        team_match = re.search(r'^<!--\s*team:\s*(.+?)\s*-->', content, re.MULTILINE)
+        if team_match:
+            team = team_match.group(1).strip()
+
     # Remove title
     content_without_title = re.sub(r'^#\s+.+\n?', '', content, flags=re.MULTILINE)
+
+    # Remove frontmatter from content
+    content_without_title = re.sub(r'^---\n.*?\n---\n?', '', content_without_title, flags=re.DOTALL | re.MULTILINE)
+
+    # Remove comment-style metadata from content
+    content_without_title = re.sub(r'^<!--\s*speaker:\s*.+?\s*-->\n?', '', content_without_title, flags=re.MULTILINE)
+    content_without_title = re.sub(r'^<!--\s*team:\s*.+?\s*-->\n?', '', content_without_title, flags=re.MULTILINE)
 
     # Split by headings
     sections = split_by_headings(content_without_title, min_level=2, max_level=level)
 
     steps = []
 
-    # Intro content
-    first_h2_match = re.search(r'^##\s+', content_without_title, re.MULTILINE)
-    if first_h2_match:
-        intro_content = content_without_title[:first_h2_match.start()].strip()
-        if intro_content:
-            steps.append({
-                'title': title,
-                'subtitle': 'Introduction',
-                'content': intro_content
-            })
+    # Skip intro content when cover is enabled (speaker or team present)
+    # to avoid duplication with cover slide
+    has_cover = bool(speaker or team)
+
+    if not has_cover:
+        # Only add intro step when there's no cover
+        first_h2_match = re.search(r'^##\s+', content_without_title, re.MULTILINE)
+        if first_h2_match:
+            intro_content = content_without_title[:first_h2_match.start()].strip()
+            if intro_content:
+                steps.append({
+                    'title': title,
+                    'subtitle': 'Introduction',
+                    'content': intro_content
+                })
 
     # Process each section
     for heading_title, heading_level, section_content in sections:
@@ -132,17 +170,19 @@ def parse_markdown(file_path: str, level: int = 3, max_items: int = 0, max_chars
             subsections = split_by_headings(section_content, min_level=heading_level + 1, max_level=level)
             for sub_title, sub_level, sub_content in subsections:
                 if sub_content.strip():
+                    # Use parent heading as title if sub_title is empty
+                    final_title = sub_title if sub_title else heading_title
                     processed = process_content(sub_content.strip(), max_items, max_chars)
                     if isinstance(processed, list):
                         for p in processed:
                             steps.append({
-                                'title': p['title'],
+                                'title': p['title'] if p['title'] else final_title,
                                 'subtitle': heading_title,
                                 'content': p['content']
                             })
                     else:
                         steps.append({
-                            'title': sub_title,
+                            'title': final_title,
                             'subtitle': heading_title,
                             'content': processed
                         })
@@ -150,14 +190,15 @@ def parse_markdown(file_path: str, level: int = 3, max_items: int = 0, max_chars
             processed = process_content(section_content.strip(), max_items, max_chars)
             if isinstance(processed, list):
                 for p in processed:
+                    final_title = p['title'] if p['title'] else heading_title
                     steps.append({
-                        'title': p['title'],
+                        'title': final_title,
                         'subtitle': '',
                         'content': p['content']
                     })
             else:
                 steps.append({
-                    'title': heading_title,
+                    'title': heading_title if heading_title else 'Overview',
                     'subtitle': '',
                     'content': processed
                 })
@@ -171,6 +212,8 @@ def parse_markdown(file_path: str, level: int = 3, max_items: int = 0, max_chars
 
     return {
         'title': title,
+        'speaker': speaker,
+        'team': team,
         'steps': steps
     }
 
